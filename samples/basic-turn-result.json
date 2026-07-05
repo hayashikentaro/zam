@@ -1,0 +1,98 @@
+{
+  "events": [
+    {
+      "type": "turn_start",
+      "turnNumber": 1
+    },
+    {
+      "type": "action_start",
+      "actorId": "esper",
+      "actionId": "fire",
+      "targetIds": [
+        "goblin"
+      ]
+    },
+    {
+      "type": "message",
+      "textKey": "action.fire",
+      "params": {
+        "actor": "エスパー ギャル"
+      }
+    },
+    {
+      "type": "damage",
+      "sourceId": "esper",
+      "targetId": "goblin",
+      "amount": 30,
+      "damageType": "magic",
+      "hpBefore": 30,
+      "hpAfter": 0
+    },
+    {
+      "type": "death",
+      "targetId": "goblin"
+    },
+    {
+      "type": "action_end",
+      "actorId": "esper",
+      "actionId": "fire"
+    },
+    {
+      "type": "battle_end",
+      "winnerTeamId": "party"
+    },
+    {
+      "type": "turn_end",
+      "turnNumber": 1
+    }
+  ],
+  "finalState": {
+    "actors": [
+      {
+        "id": "hero",
+        "name": "にんげん おとこ",
+        "teamId": "party",
+        "stats": {
+          "hp": 43,
+          "maxHp": 58,
+          "strength": 12,
+          "defense": 6,
+          "magic": 3,
+          "resistance": 4,
+          "agility": 8
+        },
+        "statusIds": []
+      },
+      {
+        "id": "esper",
+        "name": "エスパー ギャル",
+        "teamId": "party",
+        "stats": {
+          "hp": 31,
+          "maxHp": 42,
+          "strength": 5,
+          "defense": 4,
+          "magic": 13,
+          "resistance": 9,
+          "agility": 11
+        },
+        "statusIds": []
+      },
+      {
+        "id": "goblin",
+        "name": "ゴブリン",
+        "teamId": "enemy",
+        "stats": {
+          "hp": 0,
+          "maxHp": 30,
+          "strength": 8,
+          "defense": 3,
+          "magic": 0,
+          "resistance": 2,
+          "agility": 6
+        },
+        "statusIds": []
+      }
+    ]
+  }
+}

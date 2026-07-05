@@ -1,0 +1,15 @@
+{
+  "name": "zam",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "npm run build && node --test dist/tests",
+    "sample:turn": "npm run build && node dist/src/battle-core/samples/basicTurn.js"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.0",
+    "typescript": "^5.5.4"
+  }
+}
