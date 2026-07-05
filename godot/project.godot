@@ -1,0 +1,19 @@
+; Engine configuration file.
+; Open this directory with Godot 4.x.
+
+config_version=5
+
+[application]
+
+config/name="Zam Battle Lab"
+run/main_scene="res://scenes/battle_lab/BattleUiLab.tscn"
+config/features=PackedStringArray("4.3")
+
+[display]
+
+window/size/viewport_width=960
+window/size/viewport_height=540
+
+[rendering]
+
+renderer/rendering_method="mobile"

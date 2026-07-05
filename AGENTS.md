@@ -7,4 +7,4 @@
 - Verify Godot UI and animation behavior in Godot preview scenes or the actual Godot scene, not only through external mocks or web prototypes.
 - For battle UI work, add or update a focused preview scene when practical so individual components can be adjusted without running the full game flow.
 - After implementation, run the smallest relevant verification command or manual preview check and report what was checked.
-- Do not commit or push unless the user explicitly asks for it.
+- After making repository changes, always commit and push those changes before finishing the task, unless the user explicitly says not to.

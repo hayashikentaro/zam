@@ -1,5 +1,5 @@
-import { writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BattleEngine } from "../engine/BattleEngine.js";
 import { createDefaultActionBook } from "../actions/defaultActions.js";
@@ -78,9 +78,17 @@ export function createBasicTurnResult() {
 
 function runCli(): void {
   const result = createBasicTurnResult();
-  const outputPath = resolve(process.cwd(), "samples/basic-turn-result.json");
-  writeFileSync(outputPath, `${JSON.stringify(result, null, 2)}\n`);
-  console.log(`Wrote ${outputPath}`);
+  const output = `${JSON.stringify(result, null, 2)}\n`;
+  const outputPaths = [
+    resolve(process.cwd(), "samples/basic-turn-result.json"),
+    resolve(process.cwd(), "godot/samples/basic-turn-result.json")
+  ];
+
+  for (const outputPath of outputPaths) {
+    mkdirSync(dirname(outputPath), { recursive: true });
+    writeFileSync(outputPath, output);
+    console.log(`Wrote ${outputPath}`);
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
