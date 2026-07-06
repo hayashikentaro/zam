@@ -1,6 +1,7 @@
 {
   "enemyDefault": {
     "sprite": "dragon",
+    "spritePath": "res://assets/battle_lab/gold_dragon.png",
     "position": [8, 62],
     "size": [110, 88],
     "foot": [58, 84],
@@ -12,6 +13,7 @@
   "partyDefaults": [
     {
       "sprite": "party0",
+      "spritePath": "res://assets/battle_lab/party_0.png",
       "position": [216, 58],
       "size": [22, 30],
       "foot": [11, 28],
@@ -23,6 +25,7 @@
     },
     {
       "sprite": "party1",
+      "spritePath": "res://assets/battle_lab/party_1.png",
       "position": [204, 86],
       "size": [22, 30],
       "foot": [11, 28],
@@ -34,6 +37,7 @@
     },
     {
       "sprite": "party2",
+      "spritePath": "res://assets/battle_lab/party_2.png",
       "position": [236, 112],
       "size": [22, 30],
       "foot": [11, 28],
@@ -45,6 +49,7 @@
     },
     {
       "sprite": "party3",
+      "spritePath": "res://assets/battle_lab/party_3.png",
       "position": [206, 148],
       "size": [22, 30],
       "foot": [11, 28],
@@ -56,6 +61,7 @@
     },
     {
       "sprite": "party4",
+      "spritePath": "res://assets/battle_lab/party_4.png",
       "position": [238, 180],
       "size": [22, 30],
       "foot": [11, 28],
@@ -69,6 +75,7 @@
   "actors": {
     "goblin": {
       "sprite": "dragon",
+      "spritePath": "res://assets/battle_lab/gold_dragon.png",
       "position": [8, 62],
       "size": [110, 88],
       "foot": [58, 84],

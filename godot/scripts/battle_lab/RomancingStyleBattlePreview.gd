@@ -152,10 +152,23 @@ func _presentation_for_actor(actor_id: String, party_index: int, is_enemy: bool)
 	return party_defaults[min(max(party_index, 0), party_defaults.size() - 1)]
 
 func _texture_for_presentation(presentation: Dictionary, party_index: int) -> Texture2D:
+	var sprite_path := str(presentation.get("spritePath", ""))
+	if not sprite_path.is_empty():
+		var texture := _load_texture(sprite_path)
+		if texture:
+			return texture
+
 	var sprite_id := str(presentation.get("sprite", ""))
 	if sprite_id == "dragon":
 		return _make_dragon_texture()
 	return _make_party_texture(_party_palette(party_index))
+
+func _load_texture(path: String) -> Texture2D:
+	var image := Image.new()
+	if image.load(path) != OK:
+		push_warning("Failed to load battle sprite: " + path)
+		return null
+	return ImageTexture.create_from_image(image)
 
 func _register_actor(actor: Dictionary) -> void:
 	var actor_id := str(actor.get("id", ""))
