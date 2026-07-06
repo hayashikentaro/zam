@@ -1,22 +1,18 @@
 extends Control
 
 const VIRTUAL_SIZE := Vector2(320, 224)
-const PARTY_FORMATION := [
-	Vector2(216, 58),
-	Vector2(204, 86),
-	Vector2(236, 112),
-	Vector2(206, 148),
-	Vector2(238, 180),
-]
 
 @export_file("*.json") var sample_path := "res://samples/basic-turn-result.json"
+@export_file("*.json") var presentation_path := "res://data/battle_lab/actor-presentations.json"
 @export var action_delay := 0.5
 @export var damage_delay := 0.75
 
 var scale_factor := 1.0
 var origin := Vector2.ZERO
+var presentation_data: Dictionary = {}
 var actor_views: Dictionary = {}
 var actor_data: Dictionary = {}
+var idle_tweens: Array[Tween] = []
 var party_order: Array[String] = []
 var enemy_order: Array[String] = []
 var enemy_sprite: TextureRect
@@ -103,6 +99,7 @@ func _play_sample() -> void:
 	_clear_battle()
 
 	var payload := _load_json(sample_path)
+	presentation_data = _load_json(presentation_path)
 	if payload.is_empty():
 		_show_banner("Failed to load sample")
 		is_playing = false
@@ -122,6 +119,7 @@ func _play_sample() -> void:
 
 	_spawn_actors()
 	_update_layout()
+	_start_idle_for_all_actors()
 	_update_status_overlay()
 	_show_banner("")
 	banner_panel.visible = false
@@ -142,6 +140,23 @@ func _load_json(path: String) -> Dictionary:
 		return {}
 	return parsed
 
+func _presentation_for_actor(actor_id: String, party_index: int, is_enemy: bool) -> Dictionary:
+	var actors: Dictionary = presentation_data.get("actors", {})
+	if actors.has(actor_id):
+		return actors[actor_id]
+	if is_enemy:
+		return presentation_data.get("enemyDefault", {})
+	var party_defaults: Array = presentation_data.get("partyDefaults", [])
+	if party_defaults.is_empty():
+		return {}
+	return party_defaults[min(max(party_index, 0), party_defaults.size() - 1)]
+
+func _texture_for_presentation(presentation: Dictionary, party_index: int) -> Texture2D:
+	var sprite_id := str(presentation.get("sprite", ""))
+	if sprite_id == "dragon":
+		return _make_dragon_texture()
+	return _make_party_texture(_party_palette(party_index))
+
 func _register_actor(actor: Dictionary) -> void:
 	var actor_id := str(actor.get("id", ""))
 	var stats: Dictionary = actor.get("stats", {})
@@ -157,30 +172,43 @@ func _register_actor(actor: Dictionary) -> void:
 	else:
 		party_order.append(actor_id)
 
+func _vector_from_array(value, fallback := Vector2.ZERO) -> Vector2:
+	if typeof(value) != TYPE_ARRAY or value.size() < 2:
+		return fallback
+	return Vector2(float(value[0]), float(value[1]))
+
 func _spawn_actors() -> void:
 	if not enemy_order.is_empty():
 		var enemy_id := enemy_order[0]
-		enemy_sprite = _make_sprite(_make_dragon_texture(), Vector2(110, 88), Vector2(8, 62))
+		var enemy_presentation := _presentation_for_actor(enemy_id, -1, true)
+		enemy_sprite = _make_sprite(_texture_for_presentation(enemy_presentation, 0), enemy_presentation)
 		enemy_sprite.name = enemy_id
 		add_child(enemy_sprite)
 		actor_views[enemy_id] = enemy_sprite
 
 	for i in party_order.size():
 		var actor_id := party_order[i]
-		var palette := _party_palette(i)
-		var sprite := _make_sprite(_make_party_texture(palette), Vector2(22, 30), PARTY_FORMATION[min(i, PARTY_FORMATION.size() - 1)])
+		var presentation := _presentation_for_actor(actor_id, i, false)
+		var sprite := _make_sprite(_texture_for_presentation(presentation, i), presentation)
 		sprite.name = actor_id
 		add_child(sprite)
 		actor_views[actor_id] = sprite
 
-func _make_sprite(texture: Texture2D, texture_size: Vector2, virtual_pos: Vector2) -> TextureRect:
+func _make_sprite(texture: Texture2D, presentation: Dictionary) -> TextureRect:
 	var sprite := TextureRect.new()
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	sprite.texture = texture
 	sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	sprite.set_meta("virtual_pos", virtual_pos)
-	sprite.set_meta("virtual_size", texture_size)
+	sprite.set_meta("base_virtual_pos", _vector_from_array(presentation.get("position", [0, 0])))
+	sprite.set_meta("virtual_pos", _vector_from_array(presentation.get("position", [0, 0])))
+	sprite.set_meta("virtual_size", _vector_from_array(presentation.get("size", [16, 16])))
+	sprite.set_meta("foot_anchor", _vector_from_array(presentation.get("foot", [8, 16])))
+	sprite.set_meta("hit_anchor", _vector_from_array(presentation.get("hit", [8, 8])))
+	sprite.set_meta("cast_anchor", _vector_from_array(presentation.get("cast", [8, 8])))
+	sprite.set_meta("status_offset", _vector_from_array(presentation.get("statusOffset", [20, 2])))
+	sprite.set_meta("damage_offset", _vector_from_array(presentation.get("damageOffset", [-8, -10])))
+	sprite.set_meta("idle_amplitude", float(presentation.get("idleAmplitude", 0.0)))
 	return sprite
 
 func _play_events(events: Array) -> void:
@@ -209,6 +237,7 @@ func _show_action_start(event: Dictionary) -> void:
 	_show_banner(_action_name(action_id))
 	var actor = actor_views.get(actor_id)
 	if actor:
+		_show_cast_effect(actor)
 		await _step_actor(actor)
 	else:
 		await _wait(action_delay)
@@ -225,7 +254,8 @@ func _show_damage(event: Dictionary) -> void:
 	if target:
 		_flash_target(target)
 		_shake_target(target)
-		_show_floating_number(amount, _virtual_center(target), false)
+		_show_hit_effect(target, str(event.get("damageType", "")))
+		_show_floating_number(amount, _actor_anchor(target, "hit_anchor") + _meta_vector(target, "damage_offset"), false)
 
 	var data: Dictionary = actor_data.get(target_id, {})
 	if not data.is_empty():
@@ -240,7 +270,8 @@ func _show_heal(event: Dictionary) -> void:
 	var amount := int(event.get("amount", 0))
 	var target = actor_views.get(target_id)
 	if target:
-		_show_floating_number(amount, _virtual_center(target), true)
+		_show_heal_effect(target)
+		_show_floating_number(amount, _actor_anchor(target, "hit_anchor") + _meta_vector(target, "damage_offset"), true)
 
 	var data: Dictionary = actor_data.get(target_id, {})
 	if not data.is_empty():
@@ -280,6 +311,56 @@ func _shake_target(target: CanvasItem) -> void:
 	tween.tween_property(target, "position", base + Vector2(-3, 0) * scale_factor, 0.04)
 	tween.tween_property(target, "position", base + Vector2(3, 0) * scale_factor, 0.04)
 	tween.tween_property(target, "position", base, 0.06)
+
+func _show_cast_effect(actor: TextureRect) -> void:
+	var center := _to_screen(_actor_anchor(actor, "cast_anchor"))
+	for i in 4:
+		var spark := ColorRect.new()
+		spark.color = Color(0.75, 0.95, 1.0, 0.95)
+		spark.size = Vector2(2, 2) * scale_factor
+		spark.position = center + Vector2(i % 2 - 0.5, i / 2 - 0.5) * 6.0 * scale_factor
+		effects_layer.add_child(spark)
+		var tween := create_tween()
+		tween.tween_property(spark, "position", spark.position + Vector2(-8 - i * 2, -5 + i * 3) * scale_factor, 0.24)
+		tween.parallel().tween_property(spark, "modulate:a", 0.0, 0.24)
+		tween.tween_callback(spark.queue_free)
+
+func _show_hit_effect(target: TextureRect, damage_type: String) -> void:
+	var center := _to_screen(_actor_anchor(target, "hit_anchor"))
+	if damage_type == "magic":
+		for i in 5:
+			var ember := ColorRect.new()
+			ember.color = Color(1.0, 0.42 + i * 0.08, 0.08, 0.95)
+			ember.size = Vector2(3, 3) * scale_factor
+			ember.position = center + Vector2(-8 + i * 4, 0) * scale_factor
+			effects_layer.add_child(ember)
+			var tween := create_tween()
+			tween.tween_property(ember, "position", ember.position + Vector2(-4 + i * 2, -18) * scale_factor, 0.28)
+			tween.parallel().tween_property(ember, "modulate:a", 0.0, 0.28)
+			tween.tween_callback(ember.queue_free)
+	else:
+		var slash := ColorRect.new()
+		slash.color = Color.WHITE
+		slash.size = Vector2(28, 3) * scale_factor
+		slash.rotation_degrees = -25
+		slash.position = center + Vector2(-14, -2) * scale_factor
+		effects_layer.add_child(slash)
+		var tween := create_tween()
+		tween.tween_property(slash, "modulate:a", 0.0, 0.18)
+		tween.tween_callback(slash.queue_free)
+
+func _show_heal_effect(target: TextureRect) -> void:
+	var center := _to_screen(_actor_anchor(target, "hit_anchor"))
+	for i in 4:
+		var mote := ColorRect.new()
+		mote.color = Color(0.55, 1.0, 0.72, 0.95)
+		mote.size = Vector2(2, 4) * scale_factor
+		mote.position = center + Vector2(-6 + i * 4, 6) * scale_factor
+		effects_layer.add_child(mote)
+		var tween := create_tween()
+		tween.tween_property(mote, "position", mote.position + Vector2(0, -18 - i * 2) * scale_factor, 0.36)
+		tween.parallel().tween_property(mote, "modulate:a", 0.0, 0.36)
+		tween.tween_callback(mote.queue_free)
 
 func _show_floating_number(amount: int, virtual_pos: Vector2, is_heal: bool) -> void:
 	var label := Label.new()
@@ -339,11 +420,16 @@ func _update_status_overlay() -> void:
 		label.add_theme_color_override("font_color", Color.WHITE)
 		label.add_theme_constant_override("outline_size", max(2, int(2 * scale_factor)))
 		label.add_theme_color_override("font_outline_color", Color.BLACK)
-		var pos: Vector2 = PARTY_FORMATION[min(i, PARTY_FORMATION.size() - 1)] + Vector2(20, 2)
-		label.position = _to_screen(pos)
+		var actor: TextureRect = actor_views.get(actor_id)
+		if actor:
+			label.position = _to_screen(_meta_vector(actor, "base_virtual_pos") + _meta_vector(actor, "status_offset"))
 		status_layer.add_child(label)
 
 func _clear_battle() -> void:
+	for idle_tween in idle_tweens:
+		if idle_tween:
+			idle_tween.kill()
+	idle_tweens.clear()
 	actor_views.clear()
 	actor_data.clear()
 	party_order.clear()
@@ -392,10 +478,32 @@ func _update_layout() -> void:
 func _to_screen(virtual_pos: Vector2) -> Vector2:
 	return origin + virtual_pos * scale_factor
 
-func _virtual_center(actor: TextureRect) -> Vector2:
-	var virtual_pos: Vector2 = actor.get_meta("virtual_pos")
-	var virtual_size: Vector2 = actor.get_meta("virtual_size")
-	return virtual_pos + virtual_size * 0.5
+func _meta_vector(actor: TextureRect, key: String) -> Vector2:
+	if not actor.has_meta(key):
+		return Vector2.ZERO
+	return actor.get_meta(key)
+
+func _actor_anchor(actor: TextureRect, key: String) -> Vector2:
+	return _meta_vector(actor, "virtual_pos") + _meta_vector(actor, key)
+
+func _start_idle(actor: TextureRect) -> void:
+	var amplitude := float(actor.get_meta("idle_amplitude"))
+	if amplitude <= 0.0:
+		return
+	var base_pos: Vector2 = actor.position
+	var tween := create_tween()
+	tween.set_loops()
+	tween.tween_property(actor, "position", base_pos + Vector2(0, -amplitude) * scale_factor, 0.8)
+	tween.tween_property(actor, "position", base_pos, 0.8)
+	idle_tweens.append(tween)
+
+func _start_idle_for_all_actors() -> void:
+	for idle_tween in idle_tweens:
+		if idle_tween:
+			idle_tween.kill()
+	idle_tweens.clear()
+	for actor_id in actor_views.keys():
+		_start_idle(actor_views[actor_id])
 
 func _draw_frame() -> void:
 	draw_rect(Rect2(origin - Vector2(3, 3) * scale_factor, VIRTUAL_SIZE * scale_factor + Vector2(6, 6) * scale_factor), Color(0.02, 0.02, 0.05, 1.0))

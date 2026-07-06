@@ -1,0 +1,81 @@
+{
+  "enemyDefault": {
+    "sprite": "dragon",
+    "position": [8, 62],
+    "size": [110, 88],
+    "foot": [58, 84],
+    "hit": [74, 48],
+    "cast": [88, 38],
+    "damageOffset": [-10, -14],
+    "idleAmplitude": 1.5
+  },
+  "partyDefaults": [
+    {
+      "sprite": "party0",
+      "position": [216, 58],
+      "size": [22, 30],
+      "foot": [11, 28],
+      "hit": [11, 12],
+      "cast": [5, 12],
+      "statusOffset": [20, 2],
+      "damageOffset": [-8, -10],
+      "idleAmplitude": 1.0
+    },
+    {
+      "sprite": "party1",
+      "position": [204, 86],
+      "size": [22, 30],
+      "foot": [11, 28],
+      "hit": [11, 12],
+      "cast": [5, 12],
+      "statusOffset": [20, 2],
+      "damageOffset": [-8, -10],
+      "idleAmplitude": 1.0
+    },
+    {
+      "sprite": "party2",
+      "position": [236, 112],
+      "size": [22, 30],
+      "foot": [11, 28],
+      "hit": [11, 12],
+      "cast": [5, 12],
+      "statusOffset": [20, 2],
+      "damageOffset": [-8, -10],
+      "idleAmplitude": 1.0
+    },
+    {
+      "sprite": "party3",
+      "position": [206, 148],
+      "size": [22, 30],
+      "foot": [11, 28],
+      "hit": [11, 12],
+      "cast": [5, 12],
+      "statusOffset": [20, 2],
+      "damageOffset": [-8, -10],
+      "idleAmplitude": 1.0
+    },
+    {
+      "sprite": "party4",
+      "position": [238, 180],
+      "size": [22, 30],
+      "foot": [11, 28],
+      "hit": [11, 12],
+      "cast": [5, 12],
+      "statusOffset": [20, 2],
+      "damageOffset": [-8, -10],
+      "idleAmplitude": 1.0
+    }
+  ],
+  "actors": {
+    "goblin": {
+      "sprite": "dragon",
+      "position": [8, 62],
+      "size": [110, 88],
+      "foot": [58, 84],
+      "hit": [75, 51],
+      "cast": [88, 38],
+      "damageOffset": [-9, -12],
+      "idleAmplitude": 1.5
+    }
+  }
+}
