@@ -13,6 +13,7 @@ var presentation_data: Dictionary = {}
 var actor_views: Dictionary = {}
 var actor_data: Dictionary = {}
 var idle_tweens: Array[Tween] = []
+var idle_timers: Array[Timer] = []
 var party_order: Array[String] = []
 var enemy_order: Array[String] = []
 var enemy_sprite: TextureRect
@@ -170,6 +171,16 @@ func _load_texture(path: String) -> Texture2D:
 		return null
 	return ImageTexture.create_from_image(image)
 
+func _load_textures(paths) -> Array[Texture2D]:
+	var textures: Array[Texture2D] = []
+	if typeof(paths) != TYPE_ARRAY:
+		return textures
+	for path in paths:
+		var texture := _load_texture(str(path))
+		if texture:
+			textures.append(texture)
+	return textures
+
 func _register_actor(actor: Dictionary) -> void:
 	var actor_id := str(actor.get("id", ""))
 	var stats: Dictionary = actor.get("stats", {})
@@ -222,6 +233,9 @@ func _make_sprite(texture: Texture2D, presentation: Dictionary) -> TextureRect:
 	sprite.set_meta("status_offset", _vector_from_array(presentation.get("statusOffset", [20, 2])))
 	sprite.set_meta("damage_offset", _vector_from_array(presentation.get("damageOffset", [-8, -10])))
 	sprite.set_meta("idle_amplitude", float(presentation.get("idleAmplitude", 0.0)))
+	sprite.set_meta("idle_frame_textures", _load_textures(presentation.get("idleFramePaths", [])))
+	sprite.set_meta("idle_frame_seconds", float(presentation.get("idleFrameSeconds", 0.45)))
+	sprite.set_meta("idle_frame_index", 0)
 	return sprite
 
 func _play_events(events: Array) -> void:
@@ -443,6 +457,10 @@ func _clear_battle() -> void:
 		if idle_tween:
 			idle_tween.kill()
 	idle_tweens.clear()
+	for idle_timer in idle_timers:
+		if idle_timer:
+			idle_timer.queue_free()
+	idle_timers.clear()
 	actor_views.clear()
 	actor_data.clear()
 	party_order.clear()
@@ -501,20 +519,44 @@ func _actor_anchor(actor: TextureRect, key: String) -> Vector2:
 
 func _start_idle(actor: TextureRect) -> void:
 	var amplitude := float(actor.get_meta("idle_amplitude"))
-	if amplitude <= 0.0:
+	if amplitude > 0.0:
+		var base_pos: Vector2 = actor.position
+		var tween := create_tween()
+		tween.set_loops()
+		tween.tween_property(actor, "position", base_pos + Vector2(0, -amplitude) * scale_factor, 0.8)
+		tween.tween_property(actor, "position", base_pos, 0.8)
+		idle_tweens.append(tween)
+
+	var frames: Array[Texture2D] = actor.get_meta("idle_frame_textures")
+	if frames.size() < 2:
 		return
-	var base_pos: Vector2 = actor.position
-	var tween := create_tween()
-	tween.set_loops()
-	tween.tween_property(actor, "position", base_pos + Vector2(0, -amplitude) * scale_factor, 0.8)
-	tween.tween_property(actor, "position", base_pos, 0.8)
-	idle_tweens.append(tween)
+	actor.texture = frames[0]
+	var timer := Timer.new()
+	timer.wait_time = max(0.08, float(actor.get_meta("idle_frame_seconds")))
+	timer.timeout.connect(_advance_idle_frame.bind(actor))
+	add_child(timer)
+	timer.start()
+	idle_timers.append(timer)
+
+func _advance_idle_frame(actor: TextureRect) -> void:
+	if not is_instance_valid(actor):
+		return
+	var frames: Array[Texture2D] = actor.get_meta("idle_frame_textures")
+	if frames.is_empty():
+		return
+	var next_index := (int(actor.get_meta("idle_frame_index")) + 1) % frames.size()
+	actor.set_meta("idle_frame_index", next_index)
+	actor.texture = frames[next_index]
 
 func _start_idle_for_all_actors() -> void:
 	for idle_tween in idle_tweens:
 		if idle_tween:
 			idle_tween.kill()
 	idle_tweens.clear()
+	for idle_timer in idle_timers:
+		if idle_timer:
+			idle_timer.queue_free()
+	idle_timers.clear()
 	for actor_id in actor_views.keys():
 		_start_idle(actor_views[actor_id])
 

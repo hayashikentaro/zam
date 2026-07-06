@@ -5,8 +5,12 @@ const OUT_DIR := "res://assets/battle_lab"
 func _initialize() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
 	_make_dragon_texture().save_png(OUT_DIR + "/gold_dragon.png")
+	_make_dragon_texture(0).save_png(OUT_DIR + "/gold_dragon_idle_0.png")
+	_make_dragon_texture(1).save_png(OUT_DIR + "/gold_dragon_idle_1.png")
 	for i in 5:
 		_make_party_texture(_party_palette(i)).save_png(OUT_DIR + "/party_%d.png" % i)
+		_make_party_texture(_party_palette(i), 0).save_png(OUT_DIR + "/party_%d_idle_0.png" % i)
+		_make_party_texture(_party_palette(i), 1).save_png(OUT_DIR + "/party_%d_idle_1.png" % i)
 	quit()
 
 func _party_palette(index: int) -> Array:
@@ -19,7 +23,7 @@ func _party_palette(index: int) -> Array:
 	]
 	return palettes[index % palettes.size()]
 
-func _make_party_texture(palette: Array) -> Image:
+func _make_party_texture(palette: Array, frame := 0) -> Image:
 	var img := Image.create(22, 30, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
 	var skin := Color(0.98, 0.78, 0.56, 1.0)
@@ -27,13 +31,14 @@ func _make_party_texture(palette: Array) -> Image:
 	var cloth: Color = palette[1]
 	var trim: Color = palette[0]
 	var shadow := Color(0.08, 0.08, 0.09, 1.0)
-	_rect(img, 7, 3, 8, 4, hair)
-	_rect(img, 6, 7, 10, 6, skin)
+	var bob := frame % 2
+	_rect(img, 7, 3 + bob, 8, 4, hair)
+	_rect(img, 6, 7 + bob, 10, 6, skin)
 	_rect(img, 5, 9, 3, 6, hair)
 	_rect(img, 14, 9, 3, 6, hair)
-	_rect(img, 7, 14, 8, 8, cloth)
-	_rect(img, 5, 15, 3, 6, trim)
-	_rect(img, 14, 15, 3, 6, trim)
+	_rect(img, 7, 14 + bob, 8, 8, cloth)
+	_rect(img, 5, 15 + bob, 3, 6, trim)
+	_rect(img, 14, 15 + bob, 3, 6, trim)
 	_rect(img, 8, 22, 3, 5, cloth)
 	_rect(img, 13, 22, 3, 5, cloth)
 	_rect(img, 6, 27, 5, 2, shadow)
@@ -41,7 +46,7 @@ func _make_party_texture(palette: Array) -> Image:
 	_outline_alpha(img, shadow)
 	return img
 
-func _make_dragon_texture() -> Image:
+func _make_dragon_texture(frame := 0) -> Image:
 	var img := Image.create(110, 88, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
 	var gold := Color(0.94, 0.58, 0.12, 1.0)
@@ -52,14 +57,15 @@ func _make_dragon_texture() -> Image:
 	var mouth := Color(0.55, 0.08, 0.05, 1.0)
 	var black := Color(0.05, 0.04, 0.04, 1.0)
 
-	_rect(img, 18, 12, 30, 24, wing)
-	_rect(img, 44, 10, 36, 28, wing)
+	var wing_bob := frame % 2
+	_rect(img, 18, 12 - wing_bob, 30, 24, wing)
+	_rect(img, 44, 10 - wing_bob, 36, 28, wing)
 	_rect(img, 24, 35, 54, 24, gold)
 	_rect(img, 10, 48, 32, 22, gold)
 	_rect(img, 5, 56, 18, 12, gold_light)
 	_rect(img, 36, 28, 38, 16, gold_light)
 	_rect(img, 64, 44, 34, 24, gold)
-	_rect(img, 76, 58, 24, 12, mouth)
+	_rect(img, 76, 58, 24, 12 + wing_bob, mouth)
 	_rect(img, 78, 68, 22, 4, horn)
 	_rect(img, 4, 34, 10, 24, gold)
 	_rect(img, 0, 28, 8, 20, horn)
