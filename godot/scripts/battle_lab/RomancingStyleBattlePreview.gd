@@ -234,6 +234,8 @@ func _make_sprite(texture: Texture2D, presentation: Dictionary) -> TextureRect:
 	sprite.set_meta("damage_offset", _vector_from_array(presentation.get("damageOffset", [-8, -10])))
 	sprite.set_meta("idle_amplitude", float(presentation.get("idleAmplitude", 0.0)))
 	sprite.set_meta("idle_frame_textures", _load_textures(presentation.get("idleFramePaths", [])))
+	sprite.set_meta("cast_frame_textures", _load_textures(presentation.get("castFramePaths", [])))
+	sprite.set_meta("hurt_frame_textures", _load_textures(presentation.get("hurtFramePaths", [])))
 	sprite.set_meta("idle_frame_seconds", float(presentation.get("idleFrameSeconds", 0.45)))
 	sprite.set_meta("idle_frame_index", 0)
 	return sprite
@@ -264,6 +266,7 @@ func _show_action_start(event: Dictionary) -> void:
 	_show_banner(_action_name(action_id))
 	var actor = actor_views.get(actor_id)
 	if actor:
+		_play_temporary_frames(actor, "cast_frame_textures", 0.14)
 		_show_cast_effect(actor)
 		await _step_actor(actor)
 	else:
@@ -279,6 +282,7 @@ func _show_damage(event: Dictionary) -> void:
 	var amount := int(event.get("amount", 0))
 	var target = actor_views.get(target_id)
 	if target:
+		_play_temporary_frames(target, "hurt_frame_textures", 0.18)
 		_flash_target(target)
 		_shake_target(target)
 		_show_hit_effect(target, str(event.get("damageType", "")))
@@ -547,6 +551,25 @@ func _advance_idle_frame(actor: TextureRect) -> void:
 	var next_index := (int(actor.get_meta("idle_frame_index")) + 1) % frames.size()
 	actor.set_meta("idle_frame_index", next_index)
 	actor.texture = frames[next_index]
+
+func _play_temporary_frames(actor: TextureRect, meta_key: String, frame_seconds: float) -> void:
+	var frames: Array[Texture2D] = actor.get_meta(meta_key)
+	if frames.is_empty():
+		return
+	var idle_frames: Array[Texture2D] = actor.get_meta("idle_frame_textures")
+	var sequence := create_tween()
+	for frame in frames:
+		sequence.tween_callback(func() -> void:
+			if is_instance_valid(actor):
+				actor.texture = frame
+		)
+		sequence.tween_interval(frame_seconds)
+	sequence.tween_callback(func() -> void:
+		if not is_instance_valid(actor) or idle_frames.is_empty():
+			return
+		var idle_index := int(actor.get_meta("idle_frame_index")) % idle_frames.size()
+		actor.texture = idle_frames[idle_index]
+	)
 
 func _start_idle_for_all_actors() -> void:
 	for idle_tween in idle_tweens:

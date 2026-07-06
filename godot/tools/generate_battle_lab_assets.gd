@@ -7,10 +7,14 @@ func _initialize() -> void:
 	_make_dragon_texture().save_png(OUT_DIR + "/gold_dragon.png")
 	_make_dragon_texture(0).save_png(OUT_DIR + "/gold_dragon_idle_0.png")
 	_make_dragon_texture(1).save_png(OUT_DIR + "/gold_dragon_idle_1.png")
+	_make_dragon_texture(2).save_png(OUT_DIR + "/gold_dragon_hurt_0.png")
 	for i in 5:
 		_make_party_texture(_party_palette(i)).save_png(OUT_DIR + "/party_%d.png" % i)
 		_make_party_texture(_party_palette(i), 0).save_png(OUT_DIR + "/party_%d_idle_0.png" % i)
 		_make_party_texture(_party_palette(i), 1).save_png(OUT_DIR + "/party_%d_idle_1.png" % i)
+		_make_party_texture(_party_palette(i), 2).save_png(OUT_DIR + "/party_%d_cast_0.png" % i)
+		_make_party_texture(_party_palette(i), 3).save_png(OUT_DIR + "/party_%d_cast_1.png" % i)
+		_make_party_texture(_party_palette(i), 4).save_png(OUT_DIR + "/party_%d_hurt_0.png" % i)
 	quit()
 
 func _party_palette(index: int) -> Array:
@@ -32,13 +36,25 @@ func _make_party_texture(palette: Array, frame := 0) -> Image:
 	var trim: Color = palette[0]
 	var shadow := Color(0.08, 0.08, 0.09, 1.0)
 	var bob := frame % 2
+	var is_casting := frame == 2 or frame == 3
+	var is_hurt := frame == 4
 	_rect(img, 7, 3 + bob, 8, 4, hair)
 	_rect(img, 6, 7 + bob, 10, 6, skin)
 	_rect(img, 5, 9, 3, 6, hair)
 	_rect(img, 14, 9, 3, 6, hair)
 	_rect(img, 7, 14 + bob, 8, 8, cloth)
-	_rect(img, 5, 15 + bob, 3, 6, trim)
-	_rect(img, 14, 15 + bob, 3, 6, trim)
+	if is_casting:
+		_rect(img, 3, 12 + bob, 4, 3, trim)
+		_rect(img, 15, 12 + bob, 4, 3, trim)
+		_rect(img, 2, 10 + bob, 2, 2, Color(0.75, 0.95, 1.0, 1.0))
+		_rect(img, 19, 10 + bob, 2, 2, Color(0.75, 0.95, 1.0, 1.0))
+	elif is_hurt:
+		_rect(img, 4, 16, 3, 5, trim)
+		_rect(img, 14, 16, 3, 5, trim)
+		_rect(img, 7, 8, 8, 2, Color(1.0, 0.55, 0.48, 1.0))
+	else:
+		_rect(img, 5, 15 + bob, 3, 6, trim)
+		_rect(img, 14, 15 + bob, 3, 6, trim)
 	_rect(img, 8, 22, 3, 5, cloth)
 	_rect(img, 13, 22, 3, 5, cloth)
 	_rect(img, 6, 27, 5, 2, shadow)
@@ -58,6 +74,7 @@ func _make_dragon_texture(frame := 0) -> Image:
 	var black := Color(0.05, 0.04, 0.04, 1.0)
 
 	var wing_bob := frame % 2
+	var is_hurt := frame == 2
 	_rect(img, 18, 12 - wing_bob, 30, 24, wing)
 	_rect(img, 44, 10 - wing_bob, 36, 28, wing)
 	_rect(img, 24, 35, 54, 24, gold)
@@ -78,6 +95,10 @@ func _make_dragon_texture(frame := 0) -> Image:
 	_rect(img, 52, 74, 14, 6, horn)
 	_rect(img, 85, 59, 4, 4, black)
 	_rect(img, 78, 63, 22, 2, horn)
+	if is_hurt:
+		_rect(img, 30, 42, 24, 4, Color(1.0, 0.86, 0.42, 1.0))
+		_rect(img, 64, 48, 20, 4, Color(1.0, 0.86, 0.42, 1.0))
+		_rect(img, 84, 55, 8, 4, Color(1.0, 0.32, 0.24, 1.0))
 	_outline_alpha(img, black)
 	return img
 

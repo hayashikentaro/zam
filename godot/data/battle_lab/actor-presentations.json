@@ -6,6 +6,9 @@
       "res://assets/battle_lab/gold_dragon_idle_0.png",
       "res://assets/battle_lab/gold_dragon_idle_1.png"
     ],
+    "hurtFramePaths": [
+      "res://assets/battle_lab/gold_dragon_hurt_0.png"
+    ],
     "idleFrameSeconds": 0.55,
     "position": [8, 62],
     "size": [110, 88],
@@ -22,6 +25,13 @@
       "idleFramePaths": [
         "res://assets/battle_lab/party_0_idle_0.png",
         "res://assets/battle_lab/party_0_idle_1.png"
+      ],
+      "castFramePaths": [
+        "res://assets/battle_lab/party_0_cast_0.png",
+        "res://assets/battle_lab/party_0_cast_1.png"
+      ],
+      "hurtFramePaths": [
+        "res://assets/battle_lab/party_0_hurt_0.png"
       ],
       "idleFrameSeconds": 0.45,
       "position": [216, 58],
@@ -40,6 +50,13 @@
         "res://assets/battle_lab/party_1_idle_0.png",
         "res://assets/battle_lab/party_1_idle_1.png"
       ],
+      "castFramePaths": [
+        "res://assets/battle_lab/party_1_cast_0.png",
+        "res://assets/battle_lab/party_1_cast_1.png"
+      ],
+      "hurtFramePaths": [
+        "res://assets/battle_lab/party_1_hurt_0.png"
+      ],
       "idleFrameSeconds": 0.45,
       "position": [204, 86],
       "size": [22, 30],
@@ -56,6 +73,13 @@
       "idleFramePaths": [
         "res://assets/battle_lab/party_2_idle_0.png",
         "res://assets/battle_lab/party_2_idle_1.png"
+      ],
+      "castFramePaths": [
+        "res://assets/battle_lab/party_2_cast_0.png",
+        "res://assets/battle_lab/party_2_cast_1.png"
+      ],
+      "hurtFramePaths": [
+        "res://assets/battle_lab/party_2_hurt_0.png"
       ],
       "idleFrameSeconds": 0.45,
       "position": [236, 112],
@@ -74,6 +98,13 @@
         "res://assets/battle_lab/party_3_idle_0.png",
         "res://assets/battle_lab/party_3_idle_1.png"
       ],
+      "castFramePaths": [
+        "res://assets/battle_lab/party_3_cast_0.png",
+        "res://assets/battle_lab/party_3_cast_1.png"
+      ],
+      "hurtFramePaths": [
+        "res://assets/battle_lab/party_3_hurt_0.png"
+      ],
       "idleFrameSeconds": 0.45,
       "position": [206, 148],
       "size": [22, 30],
@@ -90,6 +121,13 @@
       "idleFramePaths": [
         "res://assets/battle_lab/party_4_idle_0.png",
         "res://assets/battle_lab/party_4_idle_1.png"
+      ],
+      "castFramePaths": [
+        "res://assets/battle_lab/party_4_cast_0.png",
+        "res://assets/battle_lab/party_4_cast_1.png"
+      ],
+      "hurtFramePaths": [
+        "res://assets/battle_lab/party_4_hurt_0.png"
       ],
       "idleFrameSeconds": 0.45,
       "position": [238, 180],
@@ -109,6 +147,9 @@
       "idleFramePaths": [
         "res://assets/battle_lab/gold_dragon_idle_0.png",
         "res://assets/battle_lab/gold_dragon_idle_1.png"
+      ],
+      "hurtFramePaths": [
+        "res://assets/battle_lab/gold_dragon_hurt_0.png"
       ],
       "idleFrameSeconds": 0.55,
       "position": [8, 62],
