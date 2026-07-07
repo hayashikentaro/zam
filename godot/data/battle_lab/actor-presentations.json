@@ -141,6 +141,25 @@
     }
   ],
   "actors": {
+    "gold_dragon": {
+      "sprite": "dragon",
+      "spritePath": "res://assets/battle_lab/gold_dragon.png",
+      "idleFramePaths": [
+        "res://assets/battle_lab/gold_dragon_idle_0.png",
+        "res://assets/battle_lab/gold_dragon_idle_1.png"
+      ],
+      "hurtFramePaths": [
+        "res://assets/battle_lab/gold_dragon_hurt_0.png"
+      ],
+      "idleFrameSeconds": 0.55,
+      "position": [8, 62],
+      "size": [110, 88],
+      "foot": [58, 84],
+      "hit": [75, 51],
+      "cast": [88, 38],
+      "damageOffset": [-9, -12],
+      "idleAmplitude": 1.5
+    },
     "goblin": {
       "sprite": "dragon",
       "spritePath": "res://assets/battle_lab/gold_dragon.png",

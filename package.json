@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "test": "npm run build && node --test dist/tests",
-    "sample:turn": "npm run build && node dist/src/battle-core/samples/basicTurn.js"
+    "sample:turn": "npm run build && node dist/src/battle-core/samples/basicTurn.js",
+    "sample:romancing-preview": "npm run build && node dist/src/battle-core/samples/romancingStylePreview.js"
   },
   "devDependencies": {
     "@types/node": "^26.1.0",

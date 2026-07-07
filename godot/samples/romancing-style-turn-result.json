@@ -1,0 +1,287 @@
+{
+  "events": [
+    {
+      "type": "turn_start",
+      "turnNumber": 1
+    },
+    {
+      "type": "action_start",
+      "actorId": "esper",
+      "actionId": "fire",
+      "targetIds": [
+        "gold_dragon"
+      ]
+    },
+    {
+      "type": "message",
+      "textKey": "action.fire",
+      "params": {
+        "actor": "バーバラ"
+      }
+    },
+    {
+      "type": "damage",
+      "sourceId": "esper",
+      "targetId": "gold_dragon",
+      "amount": 41,
+      "damageType": "magic",
+      "hpBefore": 980,
+      "hpAfter": 939
+    },
+    {
+      "type": "action_end",
+      "actorId": "esper",
+      "actionId": "fire"
+    },
+    {
+      "type": "action_start",
+      "actorId": "scout",
+      "actionId": "attack",
+      "targetIds": [
+        "gold_dragon"
+      ]
+    },
+    {
+      "type": "message",
+      "textKey": "action.attack",
+      "params": {
+        "actor": "アイシャ"
+      }
+    },
+    {
+      "type": "damage",
+      "sourceId": "scout",
+      "targetId": "gold_dragon",
+      "amount": 4,
+      "damageType": "physical",
+      "hpBefore": 939,
+      "hpAfter": 935
+    },
+    {
+      "type": "action_end",
+      "actorId": "scout",
+      "actionId": "attack"
+    },
+    {
+      "type": "action_start",
+      "actorId": "lancer",
+      "actionId": "poison_sting",
+      "targetIds": [
+        "gold_dragon"
+      ]
+    },
+    {
+      "type": "message",
+      "textKey": "action.poison_sting",
+      "params": {
+        "actor": "クローディア"
+      }
+    },
+    {
+      "type": "damage",
+      "sourceId": "lancer",
+      "targetId": "gold_dragon",
+      "amount": 5,
+      "damageType": "physical",
+      "hpBefore": 935,
+      "hpAfter": 930
+    },
+    {
+      "type": "status_applied",
+      "sourceId": "lancer",
+      "targetId": "gold_dragon",
+      "statusId": "poison"
+    },
+    {
+      "type": "action_end",
+      "actorId": "lancer",
+      "actionId": "poison_sting"
+    },
+    {
+      "type": "action_start",
+      "actorId": "hero",
+      "actionId": "attack",
+      "targetIds": [
+        "gold_dragon"
+      ]
+    },
+    {
+      "type": "message",
+      "textKey": "action.attack",
+      "params": {
+        "actor": "レイ"
+      }
+    },
+    {
+      "type": "damage",
+      "sourceId": "hero",
+      "targetId": "gold_dragon",
+      "amount": 12,
+      "damageType": "physical",
+      "hpBefore": 930,
+      "hpAfter": 918
+    },
+    {
+      "type": "action_end",
+      "actorId": "hero",
+      "actionId": "attack"
+    },
+    {
+      "type": "action_start",
+      "actorId": "gold_dragon",
+      "actionId": "attack",
+      "targetIds": [
+        "hero"
+      ]
+    },
+    {
+      "type": "message",
+      "textKey": "action.attack",
+      "params": {
+        "actor": "金竜"
+      }
+    },
+    {
+      "type": "damage",
+      "sourceId": "gold_dragon",
+      "targetId": "hero",
+      "amount": 17,
+      "damageType": "physical",
+      "hpBefore": 689,
+      "hpAfter": 672
+    },
+    {
+      "type": "action_end",
+      "actorId": "gold_dragon",
+      "actionId": "attack"
+    },
+    {
+      "type": "action_start",
+      "actorId": "healer",
+      "actionId": "cure",
+      "targetIds": [
+        "healer"
+      ]
+    },
+    {
+      "type": "message",
+      "textKey": "action.cure",
+      "params": {
+        "actor": "アルベルト"
+      }
+    },
+    {
+      "type": "heal",
+      "sourceId": "healer",
+      "targetId": "healer",
+      "amount": 18,
+      "hpBefore": 289,
+      "hpAfter": 307
+    },
+    {
+      "type": "action_end",
+      "actorId": "healer",
+      "actionId": "cure"
+    },
+    {
+      "type": "turn_end",
+      "turnNumber": 1
+    }
+  ],
+  "finalState": {
+    "actors": [
+      {
+        "id": "hero",
+        "name": "レイ",
+        "teamId": "party",
+        "stats": {
+          "hp": 672,
+          "maxHp": 689,
+          "strength": 18,
+          "defense": 10,
+          "magic": 3,
+          "resistance": 7,
+          "agility": 10
+        },
+        "statusIds": []
+      },
+      {
+        "id": "lancer",
+        "name": "クローディア",
+        "teamId": "party",
+        "stats": {
+          "hp": 366,
+          "maxHp": 761,
+          "strength": 15,
+          "defense": 8,
+          "magic": 5,
+          "resistance": 7,
+          "agility": 12
+        },
+        "statusIds": []
+      },
+      {
+        "id": "esper",
+        "name": "バーバラ",
+        "teamId": "party",
+        "stats": {
+          "hp": 340,
+          "maxHp": 684,
+          "strength": 8,
+          "defense": 6,
+          "magic": 21,
+          "resistance": 15,
+          "agility": 18
+        },
+        "statusIds": []
+      },
+      {
+        "id": "healer",
+        "name": "アルベルト",
+        "teamId": "party",
+        "stats": {
+          "hp": 307,
+          "maxHp": 685,
+          "strength": 9,
+          "defense": 9,
+          "magic": 16,
+          "resistance": 13,
+          "agility": 8
+        },
+        "statusIds": []
+      },
+      {
+        "id": "scout",
+        "name": "アイシャ",
+        "teamId": "party",
+        "stats": {
+          "hp": 228,
+          "maxHp": 699,
+          "strength": 13,
+          "defense": 7,
+          "magic": 8,
+          "resistance": 8,
+          "agility": 13
+        },
+        "statusIds": []
+      },
+      {
+        "id": "gold_dragon",
+        "name": "金竜",
+        "teamId": "enemy",
+        "stats": {
+          "hp": 918,
+          "maxHp": 980,
+          "strength": 20,
+          "defense": 13,
+          "magic": 8,
+          "resistance": 11,
+          "agility": 9
+        },
+        "statusIds": [
+          "poison"
+        ]
+      }
+    ]
+  }
+}

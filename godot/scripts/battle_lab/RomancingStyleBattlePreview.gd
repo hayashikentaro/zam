@@ -2,7 +2,7 @@ extends Control
 
 const VIRTUAL_SIZE := Vector2(320, 224)
 
-@export_file("*.json") var sample_path := "res://samples/basic-turn-result.json"
+@export_file("*.json") var sample_path := "res://samples/romancing-style-turn-result.json"
 @export_file("*.json") var presentation_path := "res://data/battle_lab/actor-presentations.json"
 @export_file("*.json") var action_presentation_path := "res://data/battle_lab/action-presentations.json"
 @export var action_delay := 0.5

@@ -17,7 +17,7 @@ res://scenes/battle_lab/RomancingStyleBattlePreview.tscn
 It loads:
 
 ```text
-res://samples/basic-turn-result.json
+res://samples/romancing-style-turn-result.json
 ```
 
 Use this lab to adjust battle UI timing and component presentation in the same renderer that will be used by the game.
@@ -42,10 +42,11 @@ Current adjustable script parameters on `BattleUiLab`:
 - `damage_delay`
 - `flash_duration`
 
-When the TypeScript sample protocol changes, regenerate the root sample:
+When the TypeScript sample protocol changes, regenerate the root samples:
 
 ```sh
 npm run sample:turn
+npm run sample:romancing-preview
 ```
 
-This writes both `samples/basic-turn-result.json` and `godot/samples/basic-turn-result.json`.
+These write tracked outputs under both `samples/` and `godot/samples/`.
