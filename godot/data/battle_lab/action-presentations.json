@@ -1,0 +1,46 @@
+{
+  "commandPreviewActorId": "esper",
+  "commandPreviewSeconds": 0.65,
+  "commands": [
+    {
+      "actionId": "fire",
+      "label": "ファイア",
+      "cost": 8,
+      "selected": true
+    },
+    {
+      "actionId": "cure",
+      "label": "ケアル",
+      "cost": 4
+    },
+    {
+      "actionId": "stun",
+      "label": "スタン",
+      "cost": 3
+    }
+  ],
+  "actions": {
+    "attack": {
+      "label": "こうげき",
+      "effect": "slash"
+    },
+    "fire": {
+      "label": "ファイア",
+      "effect": "fire"
+    },
+    "cure": {
+      "label": "ケアル",
+      "effect": "heal"
+    },
+    "poison_sting": {
+      "label": "どくばり",
+      "effect": "slash"
+    }
+  },
+  "messages": {
+    "action.attack": "こうげき",
+    "action.fire": "ファイア",
+    "action.cure": "ケアル",
+    "action.poison_sting": "どくばり"
+  }
+}

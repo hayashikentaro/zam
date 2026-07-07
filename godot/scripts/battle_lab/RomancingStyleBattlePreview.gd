@@ -4,22 +4,26 @@ const VIRTUAL_SIZE := Vector2(320, 224)
 
 @export_file("*.json") var sample_path := "res://samples/basic-turn-result.json"
 @export_file("*.json") var presentation_path := "res://data/battle_lab/actor-presentations.json"
+@export_file("*.json") var action_presentation_path := "res://data/battle_lab/action-presentations.json"
 @export var action_delay := 0.5
 @export var damage_delay := 0.75
 
 var scale_factor := 1.0
 var origin := Vector2.ZERO
 var presentation_data: Dictionary = {}
+var action_presentation_data: Dictionary = {}
 var actor_views: Dictionary = {}
 var actor_data: Dictionary = {}
 var idle_tweens: Array[Tween] = []
 var idle_timers: Array[Timer] = []
+var active_action_id := ""
 var party_order: Array[String] = []
 var enemy_order: Array[String] = []
 var enemy_sprite: TextureRect
 var banner_panel: PanelContainer
 var banner_label: Label
 var menu_panel: PanelContainer
+var menu_label: Label
 var status_layer: Control
 var effects_layer: Control
 var replay_button: Button
@@ -79,13 +83,13 @@ func _build_ui() -> void:
 	menu_margin.add_theme_constant_override("margin_right", 14)
 	menu_margin.add_theme_constant_override("margin_bottom", 8)
 	menu_panel.add_child(menu_margin)
-	var menu_label := Label.new()
-	menu_label.text = "エスパー\n  ファイア      8\n  ケアル        4\n  スタン        3"
+	menu_label = Label.new()
 	menu_label.add_theme_font_size_override("font_size", 14)
 	menu_label.add_theme_color_override("font_color", Color(0.02, 0.03, 0.06, 1.0))
 	menu_label.add_theme_constant_override("outline_size", 1)
 	menu_label.add_theme_color_override("font_outline_color", Color.WHITE)
 	menu_margin.add_child(menu_label)
+	menu_panel.visible = false
 
 	replay_button = Button.new()
 	replay_button.text = "Replay"
@@ -101,6 +105,7 @@ func _play_sample() -> void:
 
 	var payload := _load_json(sample_path)
 	presentation_data = _load_json(presentation_path)
+	action_presentation_data = _load_json(action_presentation_path)
 	if payload.is_empty():
 		_show_banner("Failed to load sample")
 		is_playing = false
@@ -122,8 +127,10 @@ func _play_sample() -> void:
 	_update_layout()
 	_start_idle_for_all_actors()
 	_update_status_overlay()
+	_update_command_menu()
 	_show_banner("")
 	banner_panel.visible = false
+	await _show_command_preview()
 
 	await _play_events(payload.get("events", []))
 
@@ -263,6 +270,8 @@ func _play_events(events: Array) -> void:
 func _show_action_start(event: Dictionary) -> void:
 	var actor_id := str(event.get("actorId", ""))
 	var action_id := str(event.get("actionId", ""))
+	active_action_id = action_id
+	menu_panel.visible = false
 	_show_banner(_action_name(action_id))
 	var actor = actor_views.get(actor_id)
 	if actor:
@@ -285,7 +294,7 @@ func _show_damage(event: Dictionary) -> void:
 		_play_temporary_frames(target, "hurt_frame_textures", 0.18)
 		_flash_target(target)
 		_shake_target(target)
-		_show_hit_effect(target, str(event.get("damageType", "")))
+		_show_hit_effect(target, _active_effect(str(event.get("damageType", ""))))
 		_show_floating_number(amount, _actor_anchor(target, "hit_anchor") + _meta_vector(target, "damage_offset"), false)
 
 	var data: Dictionary = actor_data.get(target_id, {})
@@ -358,7 +367,7 @@ func _show_cast_effect(actor: TextureRect) -> void:
 
 func _show_hit_effect(target: TextureRect, damage_type: String) -> void:
 	var center := _to_screen(_actor_anchor(target, "hit_anchor"))
-	if damage_type == "magic":
+	if damage_type == "magic" or damage_type == "fire":
 		for i in 5:
 			var ember := ColorRect.new()
 			ember.color = Color(1.0, 0.42 + i * 0.08, 0.08, 0.95)
@@ -412,29 +421,39 @@ func _show_banner(text: String) -> void:
 	banner_label.text = text
 	banner_panel.visible = not text.is_empty()
 
+func _active_effect(fallback: String) -> String:
+	var actions: Dictionary = action_presentation_data.get("actions", {})
+	var action: Dictionary = actions.get(active_action_id, {})
+	return str(action.get("effect", fallback))
+
+func _show_command_preview() -> void:
+	if menu_label.text.is_empty():
+		return
+	menu_panel.visible = true
+	await _wait(float(action_presentation_data.get("commandPreviewSeconds", 0.65)))
+
+func _update_command_menu() -> void:
+	var actor_id := str(action_presentation_data.get("commandPreviewActorId", ""))
+	var actor: Dictionary = actor_data.get(actor_id, {})
+	var header := str(actor.get("name", actor_id))
+	var rows: Array[String] = [header]
+	for command in action_presentation_data.get("commands", []):
+		if typeof(command) != TYPE_DICTIONARY:
+			continue
+		var pointer := ">" if bool(command.get("selected", false)) else " "
+		var label := str(command.get("label", command.get("actionId", "")))
+		var cost := int(command.get("cost", 0))
+		rows.append("%s %-8s %3d" % [pointer, label, cost])
+	menu_label.text = "\n".join(rows)
+
 func _action_name(action_id: String) -> String:
-	match action_id:
-		"fire":
-			return "ファイア"
-		"cure":
-			return "ケアル"
-		"poison_sting":
-			return "どくばり"
-		_:
-			return action_id
+	var actions: Dictionary = action_presentation_data.get("actions", {})
+	var action: Dictionary = actions.get(action_id, {})
+	return str(action.get("label", action_id))
 
 func _message_name(text_key: String) -> String:
-	match text_key:
-		"action.attack":
-			return "こうげき"
-		"action.fire":
-			return "ファイア"
-		"action.cure":
-			return "ケアル"
-		"action.poison_sting":
-			return "どくばり"
-		_:
-			return text_key
+	var messages: Dictionary = action_presentation_data.get("messages", {})
+	return str(messages.get(text_key, text_key))
 
 func _update_status_overlay() -> void:
 	for child in status_layer.get_children():
