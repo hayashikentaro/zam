@@ -1,0 +1,30 @@
+[
+  {
+    "id": "gold_dragon",
+    "name": "金竜",
+    "stats": {
+      "hp": 980,
+      "maxHp": 980,
+      "strength": 20,
+      "defense": 13,
+      "magic": 8,
+      "resistance": 11,
+      "agility": 9
+    },
+    "statusIds": []
+  },
+  {
+    "id": "goblin",
+    "name": "ゴブリン",
+    "stats": {
+      "hp": 30,
+      "maxHp": 30,
+      "strength": 8,
+      "defense": 3,
+      "magic": 0,
+      "resistance": 2,
+      "agility": 6
+    },
+    "statusIds": []
+  }
+]

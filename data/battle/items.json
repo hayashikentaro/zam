@@ -1,0 +1,25 @@
+[
+  {
+    "id": "potion",
+    "name": "ポーション",
+    "targetRule": "requested_single",
+    "effects": [
+      {
+        "type": "heal",
+        "amount": 50
+      }
+    ]
+  },
+  {
+    "id": "fire_bottle",
+    "name": "火炎びん",
+    "targetRule": "requested_single",
+    "effects": [
+      {
+        "type": "damage",
+        "power": 30,
+        "formula": "fixed"
+      }
+    ]
+  }
+]

@@ -2,6 +2,17 @@ export type { ActionBook, ActionDefinition } from "./actions/ActionDefinition.js
 export type { BattleCommand } from "./actions/BattleCommand.js";
 export { createDefaultActionBook } from "./actions/defaultActions.js";
 export { RequestedSingleTargetRule, SelfTargetRule } from "./actions/TargetRule.js";
+export {
+  createActionBookFromData,
+  createBattleStateFromData,
+  loadBattleDataCatalog,
+  loadEncounterData,
+  type ActionData,
+  type ActorData,
+  type BattleDataCatalog,
+  type EncounterData,
+  type ItemData
+} from "./data/BattleData.js";
 export type { ActorState, TeamId } from "./domain/ActorState.js";
 export type { BattleState } from "./domain/BattleState.js";
 export type { Stats } from "./domain/Stats.js";

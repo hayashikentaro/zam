@@ -1,0 +1,38 @@
+{
+  "partyActorIds": ["hero", "lancer", "esper", "healer", "scout"],
+  "enemyActorIds": ["gold_dragon"],
+  "commands": [
+    {
+      "actorId": "hero",
+      "actionId": "attack",
+      "targetIds": ["gold_dragon"]
+    },
+    {
+      "actorId": "lancer",
+      "actionId": "poison_sting",
+      "targetIds": ["gold_dragon"]
+    },
+    {
+      "actorId": "esper",
+      "actionId": "fire",
+      "targetIds": ["gold_dragon"]
+    },
+    {
+      "actorId": "healer",
+      "actionId": "cure",
+      "targetIds": ["healer"]
+    },
+    {
+      "actorId": "scout",
+      "actionId": "attack",
+      "targetIds": ["gold_dragon"]
+    },
+    {
+      "actorId": "gold_dragon",
+      "actionId": "attack",
+      "targetIds": ["hero"]
+    }
+  ],
+  "rngSeed": 67890,
+  "turnNumber": 1
+}

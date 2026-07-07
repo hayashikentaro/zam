@@ -1,126 +1,37 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createDefaultActionBook } from "../actions/defaultActions.js";
 import type { BattleCommand } from "../actions/BattleCommand.js";
 import type { BattleState } from "../domain/BattleState.js";
 import { BattleEngine } from "../engine/BattleEngine.js";
+import {
+  createActionBookFromData,
+  createBattleStateFromData,
+  loadBattleDataCatalog,
+  loadEncounterData
+} from "../data/BattleData.js";
+
+const ENCOUNTER_PATH = "data/battle/encounters/romancing-style-preview.json";
 
 export function createRomancingStylePreviewState(): BattleState {
-  return {
-    actors: [
-      {
-        id: "hero",
-        name: "レイ",
-        teamId: "party",
-        stats: {
-          hp: 689,
-          maxHp: 689,
-          strength: 18,
-          defense: 10,
-          magic: 3,
-          resistance: 7,
-          agility: 10
-        },
-        statusIds: []
-      },
-      {
-        id: "lancer",
-        name: "クローディア",
-        teamId: "party",
-        stats: {
-          hp: 366,
-          maxHp: 761,
-          strength: 15,
-          defense: 8,
-          magic: 5,
-          resistance: 7,
-          agility: 12
-        },
-        statusIds: []
-      },
-      {
-        id: "esper",
-        name: "バーバラ",
-        teamId: "party",
-        stats: {
-          hp: 340,
-          maxHp: 684,
-          strength: 8,
-          defense: 6,
-          magic: 21,
-          resistance: 15,
-          agility: 18
-        },
-        statusIds: []
-      },
-      {
-        id: "healer",
-        name: "アルベルト",
-        teamId: "party",
-        stats: {
-          hp: 289,
-          maxHp: 685,
-          strength: 9,
-          defense: 9,
-          magic: 16,
-          resistance: 13,
-          agility: 8
-        },
-        statusIds: []
-      },
-      {
-        id: "scout",
-        name: "アイシャ",
-        teamId: "party",
-        stats: {
-          hp: 228,
-          maxHp: 699,
-          strength: 13,
-          defense: 7,
-          magic: 8,
-          resistance: 8,
-          agility: 13
-        },
-        statusIds: []
-      },
-      {
-        id: "gold_dragon",
-        name: "金竜",
-        teamId: "enemy",
-        stats: {
-          hp: 980,
-          maxHp: 980,
-          strength: 20,
-          defense: 13,
-          magic: 8,
-          resistance: 11,
-          agility: 9
-        },
-        statusIds: []
-      }
-    ]
-  };
+  const catalog = loadBattleDataCatalog();
+  const encounter = loadEncounterData(ENCOUNTER_PATH);
+  return createBattleStateFromData(catalog, encounter);
 }
 
 export function createRomancingStylePreviewCommands(): BattleCommand[] {
-  return [
-    { actorId: "hero", actionId: "attack", targetIds: ["gold_dragon"] },
-    { actorId: "lancer", actionId: "poison_sting", targetIds: ["gold_dragon"] },
-    { actorId: "esper", actionId: "fire", targetIds: ["gold_dragon"] },
-    { actorId: "healer", actionId: "cure", targetIds: ["healer"] },
-    { actorId: "scout", actionId: "attack", targetIds: ["gold_dragon"] },
-    { actorId: "gold_dragon", actionId: "attack", targetIds: ["hero"] }
-  ];
+  return loadEncounterData(ENCOUNTER_PATH).commands;
 }
 
 export function createRomancingStylePreviewTurnResult() {
-  const engine = new BattleEngine(createDefaultActionBook());
+  const catalog = loadBattleDataCatalog();
+  const encounter = loadEncounterData(ENCOUNTER_PATH);
+  const engine = new BattleEngine(createActionBookFromData(catalog.actions));
   return engine.executeTurn({
-    turnNumber: 1,
-    state: createRomancingStylePreviewState(),
-    commands: createRomancingStylePreviewCommands(),
-    rngSeed: 67890
+    turnNumber: encounter.turnNumber,
+    state: createBattleStateFromData(catalog, encounter),
+    commands: encounter.commands,
+    rngSeed: encounter.rngSeed
   });
 }
 

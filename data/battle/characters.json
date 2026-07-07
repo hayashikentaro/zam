@@ -1,0 +1,72 @@
+[
+  {
+    "id": "hero",
+    "name": "レイ",
+    "stats": {
+      "hp": 689,
+      "maxHp": 689,
+      "strength": 18,
+      "defense": 10,
+      "magic": 3,
+      "resistance": 7,
+      "agility": 10
+    },
+    "statusIds": []
+  },
+  {
+    "id": "lancer",
+    "name": "クローディア",
+    "stats": {
+      "hp": 366,
+      "maxHp": 761,
+      "strength": 15,
+      "defense": 8,
+      "magic": 5,
+      "resistance": 7,
+      "agility": 12
+    },
+    "statusIds": []
+  },
+  {
+    "id": "esper",
+    "name": "バーバラ",
+    "stats": {
+      "hp": 340,
+      "maxHp": 684,
+      "strength": 8,
+      "defense": 6,
+      "magic": 21,
+      "resistance": 15,
+      "agility": 18
+    },
+    "statusIds": []
+  },
+  {
+    "id": "healer",
+    "name": "アルベルト",
+    "stats": {
+      "hp": 289,
+      "maxHp": 685,
+      "strength": 9,
+      "defense": 9,
+      "magic": 16,
+      "resistance": 13,
+      "agility": 8
+    },
+    "statusIds": []
+  },
+  {
+    "id": "scout",
+    "name": "アイシャ",
+    "stats": {
+      "hp": 228,
+      "maxHp": 699,
+      "strength": 13,
+      "defense": 7,
+      "magic": 8,
+      "resistance": 8,
+      "agility": 13
+    },
+    "statusIds": []
+  }
+]

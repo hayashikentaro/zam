@@ -1,0 +1,53 @@
+[
+  {
+    "id": "attack",
+    "nameKey": "attack",
+    "targetRule": "requested_single",
+    "effects": [
+      {
+        "type": "damage",
+        "power": 6,
+        "formula": "strength_weapon"
+      }
+    ]
+  },
+  {
+    "id": "fire",
+    "nameKey": "fire",
+    "targetRule": "requested_single",
+    "effects": [
+      {
+        "type": "damage",
+        "power": 10,
+        "formula": "magic"
+      }
+    ]
+  },
+  {
+    "id": "cure",
+    "nameKey": "cure",
+    "targetRule": "self",
+    "effects": [
+      {
+        "type": "heal",
+        "amount": 18
+      }
+    ]
+  },
+  {
+    "id": "poison_sting",
+    "nameKey": "poison_sting",
+    "targetRule": "requested_single",
+    "effects": [
+      {
+        "type": "damage",
+        "power": 2,
+        "formula": "strength_weapon"
+      },
+      {
+        "type": "status_apply",
+        "statusId": "poison"
+      }
+    ]
+  }
+]
