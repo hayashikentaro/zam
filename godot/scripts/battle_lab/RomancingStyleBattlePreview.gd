@@ -1,17 +1,20 @@
 extends Control
 
-const VIRTUAL_SIZE := Vector2(320, 224)
+const DEFAULT_VIRTUAL_SIZE := Vector2(320, 224)
 
 @export_file("*.json") var sample_path := "res://samples/romancing-style-turn-result.json"
 @export_file("*.json") var presentation_path := "res://data/battle_lab/actor-presentations.json"
 @export_file("*.json") var action_presentation_path := "res://data/battle_lab/action-presentations.json"
+@export_file("*.json") var ui_settings_path := "res://data/battle_lab/ui-settings.json"
 @export var action_delay := 0.5
 @export var damage_delay := 0.75
 
+var virtual_size := DEFAULT_VIRTUAL_SIZE
 var scale_factor := 1.0
 var origin := Vector2.ZERO
 var presentation_data: Dictionary = {}
 var action_presentation_data: Dictionary = {}
+var ui_settings: Dictionary = {}
 var actor_views: Dictionary = {}
 var actor_data: Dictionary = {}
 var idle_tweens: Array[Tween] = []
@@ -31,6 +34,8 @@ var is_playing := false
 
 func _ready() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	ui_settings = _load_json(ui_settings_path)
+	virtual_size = _setting_vector("virtualSize", DEFAULT_VIRTUAL_SIZE)
 	_build_ui()
 	replay()
 
@@ -56,38 +61,26 @@ func _build_ui() -> void:
 	effects_layer = Control.new()
 	add_child(effects_layer)
 
-	banner_panel = _make_panel(Color(0.83, 0.97, 0.98, 1.0), Color(0.08, 0.1, 0.16, 1.0), 0)
+	banner_panel = _make_panel_from_settings("panels/banner", Color(0.83, 0.97, 0.98, 1.0), Color(0.08, 0.1, 0.16, 1.0))
 	banner_panel.visible = false
 	add_child(banner_panel)
 
 	var banner_margin := MarginContainer.new()
-	banner_margin.add_theme_constant_override("margin_left", 12)
-	banner_margin.add_theme_constant_override("margin_top", 6)
-	banner_margin.add_theme_constant_override("margin_right", 12)
-	banner_margin.add_theme_constant_override("margin_bottom", 6)
+	_apply_margins(banner_margin, "panels/banner/margins", [12, 6, 12, 6])
 	banner_panel.add_child(banner_margin)
 
 	banner_label = Label.new()
 	banner_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	banner_label.add_theme_font_size_override("font_size", 20)
-	banner_label.add_theme_color_override("font_color", Color(0.02, 0.03, 0.06, 1.0))
-	banner_label.add_theme_constant_override("outline_size", 2)
-	banner_label.add_theme_color_override("font_outline_color", Color.WHITE)
+	_apply_label_style(banner_label, "labels/banner", 20)
 	banner_margin.add_child(banner_label)
 
-	menu_panel = _make_panel(Color(0.83, 0.97, 0.98, 0.96), Color(0.08, 0.1, 0.16, 1.0), 0)
+	menu_panel = _make_panel_from_settings("panels/menu", Color(0.83, 0.97, 0.98, 0.96), Color(0.08, 0.1, 0.16, 1.0))
 	add_child(menu_panel)
 	var menu_margin := MarginContainer.new()
-	menu_margin.add_theme_constant_override("margin_left", 14)
-	menu_margin.add_theme_constant_override("margin_top", 8)
-	menu_margin.add_theme_constant_override("margin_right", 14)
-	menu_margin.add_theme_constant_override("margin_bottom", 8)
+	_apply_margins(menu_margin, "panels/menu/margins", [14, 8, 14, 8])
 	menu_panel.add_child(menu_margin)
 	menu_label = Label.new()
-	menu_label.add_theme_font_size_override("font_size", 14)
-	menu_label.add_theme_color_override("font_color", Color(0.02, 0.03, 0.06, 1.0))
-	menu_label.add_theme_constant_override("outline_size", 1)
-	menu_label.add_theme_color_override("font_outline_color", Color.WHITE)
+	_apply_label_style(menu_label, "labels/menu", 14)
 	menu_margin.add_child(menu_label)
 	menu_panel.visible = false
 
@@ -147,6 +140,47 @@ func _load_json(path: String) -> Dictionary:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return {}
 	return parsed
+
+func _setting(path: String, fallback):
+	var current = ui_settings
+	for key in path.split("/"):
+		if typeof(current) != TYPE_DICTIONARY or not current.has(key):
+			return fallback
+		current = current[key]
+	return current
+
+func _setting_float(path: String, fallback: float) -> float:
+	return float(_setting(path, fallback))
+
+func _setting_int(path: String, fallback: int) -> int:
+	return int(_setting(path, fallback))
+
+func _setting_vector(path: String, fallback: Vector2) -> Vector2:
+	return _vector_from_array(_setting(path, [fallback.x, fallback.y]), fallback)
+
+func _setting_color(path: String, fallback: Color) -> Color:
+	return _color_from_array(_setting(path, [fallback.r, fallback.g, fallback.b, fallback.a]), fallback)
+
+func _color_from_array(value, fallback := Color.WHITE) -> Color:
+	if typeof(value) != TYPE_ARRAY or value.size() < 3:
+		return fallback
+	var alpha := float(value[3]) if value.size() > 3 else fallback.a
+	return Color(float(value[0]), float(value[1]), float(value[2]), alpha)
+
+func _apply_margins(margin: MarginContainer, path: String, fallback: Array) -> void:
+	var values = _setting(path, fallback)
+	if typeof(values) != TYPE_ARRAY or values.size() < 4:
+		values = fallback
+	margin.add_theme_constant_override("margin_left", int(values[0]))
+	margin.add_theme_constant_override("margin_top", int(values[1]))
+	margin.add_theme_constant_override("margin_right", int(values[2]))
+	margin.add_theme_constant_override("margin_bottom", int(values[3]))
+
+func _apply_label_style(label: Label, path: String, fallback_font_size: int) -> void:
+	label.add_theme_font_size_override("font_size", _setting_int(path + "/fontSize", fallback_font_size))
+	label.add_theme_color_override("font_color", _setting_color(path + "/fontColor", Color.WHITE))
+	label.add_theme_constant_override("outline_size", _setting_int(path + "/outlineSize", 1))
+	label.add_theme_color_override("font_outline_color", _setting_color(path + "/outlineColor", Color.BLACK))
 
 func _presentation_for_actor(actor_id: String, party_index: int, is_enemy: bool) -> Dictionary:
 	var actors: Dictionary = presentation_data.get("actors", {})
@@ -263,9 +297,9 @@ func _play_events(events: Array) -> void:
 				await _show_death(event)
 			"battle_end":
 				_show_banner("WINNER  " + str(event.get("winnerTeamId", "")))
-				await _wait(action_delay)
+				await _wait(_setting_float("timing/actionDelay", action_delay))
 			_:
-				await _wait(0.12)
+				await _wait(_setting_float("timing/unknownEventDelay", 0.12))
 
 func _show_action_start(event: Dictionary) -> void:
 	var actor_id := str(event.get("actorId", ""))
@@ -275,23 +309,23 @@ func _show_action_start(event: Dictionary) -> void:
 	_show_banner(_action_name(action_id))
 	var actor = actor_views.get(actor_id)
 	if actor:
-		_play_temporary_frames(actor, "cast_frame_textures", 0.14)
+		_play_temporary_frames(actor, "cast_frame_textures", _setting_float("timing/castFrameSeconds", 0.14))
 		_show_cast_effect(actor)
 		await _step_actor(actor)
 	else:
-		await _wait(action_delay)
+		await _wait(_setting_float("timing/actionDelay", action_delay))
 
 func _show_message(event: Dictionary) -> void:
 	var text_key := str(event.get("textKey", ""))
 	_show_banner(_message_name(text_key))
-	await _wait(action_delay)
+	await _wait(_setting_float("timing/actionDelay", action_delay))
 
 func _show_damage(event: Dictionary) -> void:
 	var target_id := str(event.get("targetId", ""))
 	var amount := int(event.get("amount", 0))
 	var target = actor_views.get(target_id)
 	if target:
-		_play_temporary_frames(target, "hurt_frame_textures", 0.18)
+		_play_temporary_frames(target, "hurt_frame_textures", _setting_float("timing/hurtFrameSeconds", 0.18))
 		_flash_target(target)
 		_shake_target(target)
 		_show_hit_effect(target, _active_effect(str(event.get("damageType", ""))))
@@ -303,7 +337,7 @@ func _show_damage(event: Dictionary) -> void:
 		actor_data[target_id] = data
 		_update_status_overlay()
 
-	await _wait(damage_delay)
+	await _wait(_setting_float("timing/damageDelay", damage_delay))
 
 func _show_heal(event: Dictionary) -> void:
 	var target_id := str(event.get("targetId", ""))
@@ -319,7 +353,7 @@ func _show_heal(event: Dictionary) -> void:
 		actor_data[target_id] = data
 		_update_status_overlay()
 
-	await _wait(damage_delay)
+	await _wait(_setting_float("timing/damageDelay", damage_delay))
 
 func _show_death(event: Dictionary) -> void:
 	var target = actor_views.get(str(event.get("targetId", "")))
@@ -405,16 +439,17 @@ func _show_heal_effect(target: TextureRect) -> void:
 func _show_floating_number(amount: int, virtual_pos: Vector2, is_heal: bool) -> void:
 	var label := Label.new()
 	label.text = str(amount)
-	label.add_theme_font_size_override("font_size", int(18 * scale_factor))
-	label.add_theme_color_override("font_color", Color(0.55, 1.0, 0.72, 1.0) if is_heal else Color.WHITE)
-	label.add_theme_constant_override("outline_size", max(2, int(2 * scale_factor)))
-	label.add_theme_color_override("font_outline_color", Color.BLACK)
-	label.position = _to_screen(virtual_pos + Vector2(-8, -8))
+	label.add_theme_font_size_override("font_size", int(_setting_int("labels/floatingDamage/fontSize", 18) * scale_factor))
+	label.add_theme_color_override("font_color", _setting_color("labels/floatingDamage/healColor", Color(0.55, 1.0, 0.72, 1.0)) if is_heal else _setting_color("labels/floatingDamage/fontColor", Color.WHITE))
+	label.add_theme_constant_override("outline_size", max(_setting_int("labels/floatingDamage/outlineSize", 2), int(_setting_int("labels/floatingDamage/outlineSize", 2) * scale_factor)))
+	label.add_theme_color_override("font_outline_color", _setting_color("labels/floatingDamage/outlineColor", Color.BLACK))
+	label.position = _to_screen(virtual_pos + _setting_vector("labels/floatingDamage/offset", Vector2(-8, -8)))
 	effects_layer.add_child(label)
 
 	var tween := create_tween()
-	tween.tween_property(label, "position", label.position + Vector2(0, -22) * scale_factor, 0.48)
-	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.48)
+	var duration := _setting_float("labels/floatingDamage/duration", 0.48)
+	tween.tween_property(label, "position", label.position + _setting_vector("labels/floatingDamage/rise", Vector2(0, -22)) * scale_factor, duration)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, duration)
 	tween.tween_callback(label.queue_free)
 
 func _show_banner(text: String) -> void:
@@ -466,10 +501,10 @@ func _update_status_overlay() -> void:
 			continue
 		var label := Label.new()
 		label.text = "%s\n%03d/%03d" % [data.get("name", actor_id), int(data.get("hp", 0)), int(data.get("maxHp", 0))]
-		label.add_theme_font_size_override("font_size", int(10 * scale_factor))
-		label.add_theme_color_override("font_color", Color.WHITE)
-		label.add_theme_constant_override("outline_size", max(2, int(2 * scale_factor)))
-		label.add_theme_color_override("font_outline_color", Color.BLACK)
+		label.add_theme_font_size_override("font_size", int(_setting_int("labels/status/fontSize", 10) * scale_factor))
+		label.add_theme_color_override("font_color", _setting_color("labels/status/fontColor", Color.WHITE))
+		label.add_theme_constant_override("outline_size", max(_setting_int("labels/status/outlineSize", 2), int(_setting_int("labels/status/outlineSize", 2) * scale_factor)))
+		label.add_theme_color_override("font_outline_color", _setting_color("labels/status/outlineColor", Color.BLACK))
 		var actor: TextureRect = actor_views.get(actor_id)
 		if actor:
 			label.position = _to_screen(_meta_vector(actor, "base_virtual_pos") + _meta_vector(actor, "status_offset"))
@@ -504,21 +539,21 @@ func _update_layout() -> void:
 	var available := size
 	if available.x <= 0 or available.y <= 0:
 		return
-	scale_factor = floor(min(available.x / VIRTUAL_SIZE.x, available.y / VIRTUAL_SIZE.y))
+	scale_factor = floor(min(available.x / virtual_size.x, available.y / virtual_size.y))
 	scale_factor = max(scale_factor, 1.0)
-	origin = (available - VIRTUAL_SIZE * scale_factor) * 0.5
+	origin = (available - virtual_size * scale_factor) * 0.5
 
 	status_layer.position = Vector2.ZERO
 	status_layer.size = size
 	effects_layer.position = Vector2.ZERO
 	effects_layer.size = size
 
-	banner_panel.position = _to_screen(Vector2(184, 22))
-	banner_panel.size = Vector2(104, 28) * scale_factor
-	menu_panel.position = _to_screen(Vector2(32, 48))
-	menu_panel.size = Vector2(132, 80) * scale_factor
-	replay_button.position = Vector2(12, 12)
-	replay_button.size = Vector2(76, 28)
+	banner_panel.position = _to_screen(_setting_vector("layout/banner/position", Vector2(184, 22)))
+	banner_panel.size = _setting_vector("layout/banner/size", Vector2(104, 28)) * scale_factor
+	menu_panel.position = _to_screen(_setting_vector("layout/menu/position", Vector2(32, 48)))
+	menu_panel.size = _setting_vector("layout/menu/size", Vector2(132, 80)) * scale_factor
+	replay_button.position = _setting_vector("layout/replayButton/position", Vector2(12, 12))
+	replay_button.size = _setting_vector("layout/replayButton/size", Vector2(76, 28))
 
 	for actor_id in actor_views.keys():
 		var actor: TextureRect = actor_views[actor_id]
@@ -603,16 +638,21 @@ func _start_idle_for_all_actors() -> void:
 		_start_idle(actor_views[actor_id])
 
 func _draw_frame() -> void:
-	draw_rect(Rect2(origin - Vector2(3, 3) * scale_factor, VIRTUAL_SIZE * scale_factor + Vector2(6, 6) * scale_factor), Color(0.02, 0.02, 0.05, 1.0))
-	draw_rect(Rect2(origin, VIRTUAL_SIZE * scale_factor), Color(0.68, 0.84, 0.96, 1.0))
+	var padding := _setting_float("field/framePadding", 3.0)
+	draw_rect(
+		Rect2(origin - Vector2(padding, padding) * scale_factor, virtual_size * scale_factor + Vector2(padding * 2.0, padding * 2.0) * scale_factor),
+		_setting_color("field/frameColor", Color(0.02, 0.02, 0.05, 1.0))
+	)
+	draw_rect(Rect2(origin, virtual_size * scale_factor), _setting_color("field/backdropColor", Color(0.68, 0.84, 0.96, 1.0)))
 
 func _draw_sky() -> void:
-	draw_rect(Rect2(_to_screen(Vector2.ZERO), Vector2(VIRTUAL_SIZE.x, 58) * scale_factor), Color(0.58, 0.79, 0.95, 1.0))
-	for x in [10, 74, 150, 230, 286]:
-		_draw_cloud(Vector2(x, 34))
+	var sky_height := _setting_float("field/skyHeight", 58.0)
+	draw_rect(Rect2(_to_screen(Vector2.ZERO), Vector2(virtual_size.x, sky_height) * scale_factor), _setting_color("field/skyColor", Color(0.58, 0.79, 0.95, 1.0)))
+	for cloud_position in _setting("field/cloudPositions", [[10, 34], [74, 34], [150, 34], [230, 34], [286, 34]]):
+		_draw_cloud(_vector_from_array(cloud_position))
 
 func _draw_cloud(pos: Vector2) -> void:
-	var color := Color(0.82, 0.96, 0.98, 0.95)
+	var color := _setting_color("field/cloudColor", Color(0.82, 0.96, 0.98, 0.95))
 	for rect in [
 		Rect2(pos, Vector2(26, 3)),
 		Rect2(pos + Vector2(8, -3), Vector2(18, 3)),
@@ -621,23 +661,36 @@ func _draw_cloud(pos: Vector2) -> void:
 		draw_rect(Rect2(_to_screen(rect.position), rect.size * scale_factor), color)
 
 func _draw_stone_floor() -> void:
-	draw_rect(Rect2(_to_screen(Vector2(0, 58)), Vector2(320, 166) * scale_factor), Color(0.47, 0.46, 0.43, 1.0))
-	var dark := Color(0.30, 0.30, 0.30, 1.0)
-	var light := Color(0.58, 0.57, 0.53, 1.0)
-	for y in range(58, 224, 10):
-		for x in range(-8, 328, 16):
-			var offset := 8 if int((y - 58) / 10) % 2 == 0 else 0
+	var floor_y := _setting_int("field/floorY", 58)
+	var floor_height := _setting_int("field/floorHeight", 166)
+	var row_height := _setting_int("field/floorRowHeight", 10)
+	var tile_width := _setting_int("field/floorTileWidth", 16)
+	var tile_size := _setting_vector("field/floorTileSize", Vector2(12, 8))
+	draw_rect(Rect2(_to_screen(Vector2(0, floor_y)), Vector2(virtual_size.x, floor_height) * scale_factor), _setting_color("field/floorColor", Color(0.47, 0.46, 0.43, 1.0)))
+	var dark := _setting_color("field/floorDarkColor", Color(0.30, 0.30, 0.30, 1.0))
+	var light := _setting_color("field/floorLightColor", Color(0.58, 0.57, 0.53, 1.0))
+	for y in range(floor_y, floor_y + floor_height, row_height):
+		for x in range(-tile_width / 2, int(virtual_size.x) + tile_width, tile_width):
+			var offset := tile_width / 2 if int((y - floor_y) / row_height) % 2 == 0 else 0
 			var px := x + offset
-			draw_rect(Rect2(_to_screen(Vector2(px, y)), Vector2(12, 8) * scale_factor), light)
-			draw_rect(Rect2(_to_screen(Vector2(px, y)), Vector2(12, 1) * scale_factor), dark)
-			draw_rect(Rect2(_to_screen(Vector2(px, y)), Vector2(1, 8) * scale_factor), dark)
+			draw_rect(Rect2(_to_screen(Vector2(px, y)), tile_size * scale_factor), light)
+			draw_rect(Rect2(_to_screen(Vector2(px, y)), Vector2(tile_size.x, 1) * scale_factor), dark)
+			draw_rect(Rect2(_to_screen(Vector2(px, y)), Vector2(1, tile_size.y) * scale_factor), dark)
 
-func _make_panel(fill_color: Color, border_color: Color, corner_radius: int) -> PanelContainer:
+func _make_panel_from_settings(path: String, fallback_fill_color: Color, fallback_border_color: Color) -> PanelContainer:
+	return _make_panel(
+		_setting_color(path + "/fillColor", fallback_fill_color),
+		_setting_color(path + "/borderColor", fallback_border_color),
+		_setting_int(path + "/cornerRadius", 0),
+		_setting_int(path + "/borderWidth", 2)
+	)
+
+func _make_panel(fill_color: Color, border_color: Color, corner_radius: int, border_width := 2) -> PanelContainer:
 	var panel := PanelContainer.new()
 	var style := StyleBoxFlat.new()
 	style.bg_color = fill_color
 	style.border_color = border_color
-	style.set_border_width_all(2)
+	style.set_border_width_all(border_width)
 	style.corner_radius_top_left = corner_radius
 	style.corner_radius_top_right = corner_radius
 	style.corner_radius_bottom_left = corner_radius

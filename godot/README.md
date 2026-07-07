@@ -24,7 +24,7 @@ Use this lab to adjust battle UI timing and component presentation in the same r
 
 Use `RomancingStyleBattlePreview` to tune a 16-bit side-view battle layout: a large enemy on the left, party formation on the right, top action banners, command/status windows, generated placeholder pixel sprites, hit flashes, and floating damage numbers. The placeholder sprites are generated in GDScript so this prototype does not depend on copied reference art.
 
-Presentation data lives in `res://data/battle_lab/actor-presentations.json` for actor placement and anchors, and `res://data/battle_lab/action-presentations.json` for command labels, action banners, and effect choices.
+Presentation data lives in `res://data/battle_lab/actor-presentations.json` for actor placement and anchors, `res://data/battle_lab/action-presentations.json` for command labels, action banners, and effect choices, and `res://data/battle_lab/ui-settings.json` for preview layout, timing, colors, fonts, and field drawing settings.
 
 Regenerate the current placeholder PNG sprites and idle frames with:
 
