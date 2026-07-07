@@ -2,9 +2,12 @@ extends Control
 
 const DEFAULT_VIRTUAL_SIZE := Vector2(320, 224)
 
+enum UiPhase { COMMAND_SELECT, ACTION_BANNER, EXECUTING, RESULT, FINISHED }
+
 @export_file("*.json") var sample_path := "res://samples/romancing-style-turn-result.json"
 @export_file("*.json") var presentation_path := "res://data/battle_lab/actor-presentations.json"
 @export_file("*.json") var action_presentation_path := "res://data/battle_lab/action-presentations.json"
+@export_file("*.json") var status_presentation_path := "res://data/battle_lab/status-presentations.json"
 @export_file("*.json") var ui_settings_path := "res://data/battle_lab/ui-settings.json"
 @export var action_delay := 0.5
 @export var damage_delay := 0.75
@@ -14,6 +17,7 @@ var scale_factor := 1.0
 var origin := Vector2.ZERO
 var presentation_data: Dictionary = {}
 var action_presentation_data: Dictionary = {}
+var status_presentation_data: Dictionary = {}
 var ui_settings: Dictionary = {}
 var actor_views: Dictionary = {}
 var actor_data: Dictionary = {}
@@ -30,6 +34,7 @@ var menu_label: Label
 var status_layer: Control
 var effects_layer: Control
 var replay_button: Button
+var ui_phase := UiPhase.COMMAND_SELECT
 var is_playing := false
 
 func _ready() -> void:
@@ -99,6 +104,7 @@ func _play_sample() -> void:
 	var payload := _load_json(sample_path)
 	presentation_data = _load_json(presentation_path)
 	action_presentation_data = _load_json(action_presentation_path)
+	status_presentation_data = _load_json(status_presentation_path)
 	if payload.is_empty():
 		_show_banner("Failed to load sample")
 		is_playing = false
@@ -115,6 +121,15 @@ func _play_sample() -> void:
 			if not data.is_empty():
 				data["hp"] = int(event.get("hpBefore", 0))
 				actor_data[target_id] = data
+		elif event.get("type") == "status_applied":
+			var target_id := str(event.get("targetId", ""))
+			var status_id := str(event.get("statusId", ""))
+			var data: Dictionary = actor_data.get(target_id, {})
+			if not data.is_empty():
+				var status_ids: Array = data.get("statusIds", [])
+				status_ids.erase(status_id)
+				data["statusIds"] = status_ids
+				actor_data[target_id] = data
 
 	_spawn_actors()
 	_update_layout()
@@ -127,6 +142,7 @@ func _play_sample() -> void:
 
 	await _play_events(payload.get("events", []))
 
+	_set_ui_phase(UiPhase.FINISHED)
 	replay_button.disabled = false
 	is_playing = false
 
@@ -231,6 +247,7 @@ func _register_actor(actor: Dictionary) -> void:
 		"teamId": str(actor.get("teamId", "")),
 		"hp": int(stats.get("hp", 0)),
 		"maxHp": int(stats.get("maxHp", 0)),
+		"statusIds": actor.get("statusIds", []),
 	}
 	if str(actor.get("teamId", "")) == "enemy":
 		enemy_order.append(actor_id)
@@ -293,9 +310,12 @@ func _play_events(events: Array) -> void:
 				await _show_damage(event)
 			"heal":
 				await _show_heal(event)
+			"status_applied":
+				await _show_status_applied(event)
 			"death":
 				await _show_death(event)
 			"battle_end":
+				_set_ui_phase(UiPhase.FINISHED)
 				_show_banner("WINNER  " + str(event.get("winnerTeamId", "")))
 				await _wait(_setting_float("timing/actionDelay", action_delay))
 			_:
@@ -305,7 +325,7 @@ func _show_action_start(event: Dictionary) -> void:
 	var actor_id := str(event.get("actorId", ""))
 	var action_id := str(event.get("actionId", ""))
 	active_action_id = action_id
-	menu_panel.visible = false
+	_set_ui_phase(UiPhase.ACTION_BANNER)
 	_show_banner(_action_name(action_id))
 	var actor = actor_views.get(actor_id)
 	if actor:
@@ -321,6 +341,7 @@ func _show_message(event: Dictionary) -> void:
 	await _wait(_setting_float("timing/actionDelay", action_delay))
 
 func _show_damage(event: Dictionary) -> void:
+	_set_ui_phase(UiPhase.EXECUTING)
 	var target_id := str(event.get("targetId", ""))
 	var amount := int(event.get("amount", 0))
 	var target = actor_views.get(target_id)
@@ -340,6 +361,7 @@ func _show_damage(event: Dictionary) -> void:
 	await _wait(_setting_float("timing/damageDelay", damage_delay))
 
 func _show_heal(event: Dictionary) -> void:
+	_set_ui_phase(UiPhase.EXECUTING)
 	var target_id := str(event.get("targetId", ""))
 	var amount := int(event.get("amount", 0))
 	var target = actor_views.get(target_id)
@@ -354,6 +376,26 @@ func _show_heal(event: Dictionary) -> void:
 		_update_status_overlay()
 
 	await _wait(_setting_float("timing/damageDelay", damage_delay))
+
+func _show_status_applied(event: Dictionary) -> void:
+	_set_ui_phase(UiPhase.RESULT)
+	var target_id := str(event.get("targetId", ""))
+	var status_id := str(event.get("statusId", ""))
+	var data: Dictionary = actor_data.get(target_id, {})
+	if not data.is_empty():
+		var status_ids: Array = data.get("statusIds", [])
+		if not status_ids.has(status_id):
+			status_ids.append(status_id)
+		data["statusIds"] = status_ids
+		actor_data[target_id] = data
+		_update_status_overlay()
+
+	var target = actor_views.get(target_id)
+	if target:
+		_show_status_popup(target, status_id)
+		_show_status_particles(target, status_id)
+
+	await _wait(_setting_float("timing/actionDelay", action_delay))
 
 func _show_death(event: Dictionary) -> void:
 	var target = actor_views.get(str(event.get("targetId", "")))
@@ -436,6 +478,41 @@ func _show_heal_effect(target: TextureRect) -> void:
 		tween.parallel().tween_property(mote, "modulate:a", 0.0, 0.36)
 		tween.tween_callback(mote.queue_free)
 
+func _show_status_popup(target: TextureRect, status_id: String) -> void:
+	var status := _status_presentation(status_id)
+	var label := Label.new()
+	label.text = str(status.get("label", status_id))
+	label.add_theme_font_size_override("font_size", int(_setting_int("labels/floatingDamage/fontSize", 18) * scale_factor))
+	label.add_theme_color_override("font_color", _color_from_array(status.get("fontColor", [0.82, 0.46, 1.0, 1.0]), Color(0.82, 0.46, 1.0, 1.0)))
+	label.add_theme_constant_override("outline_size", max(2, int(2 * scale_factor)))
+	label.add_theme_color_override("font_outline_color", _color_from_array(status.get("outlineColor", [0.0, 0.0, 0.0, 1.0]), Color.BLACK))
+	var offset := _vector_from_array(status.get("offset", [-10, -18]), Vector2(-10, -18))
+	label.position = _to_screen(_actor_anchor(target, "hit_anchor") + offset)
+	effects_layer.add_child(label)
+
+	var duration := float(status.get("duration", 0.62))
+	var rise := _vector_from_array(status.get("rise", [0, -16]), Vector2(0, -16))
+	var tween := create_tween()
+	tween.tween_property(label, "position", label.position + rise * scale_factor, duration)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, duration)
+	tween.tween_callback(label.queue_free)
+
+func _show_status_particles(target: TextureRect, status_id: String) -> void:
+	var status := _status_presentation(status_id)
+	var center := _to_screen(_actor_anchor(target, "hit_anchor"))
+	var count := int(status.get("particleCount", 5))
+	var color := _color_from_array(status.get("particleColor", [0.72, 0.25, 0.95, 0.95]), Color(0.72, 0.25, 0.95, 0.95))
+	for i in count:
+		var mote := ColorRect.new()
+		mote.color = color
+		mote.size = Vector2(2, 3) * scale_factor
+		mote.position = center + Vector2(-8 + i * 4, 4 - (i % 2) * 3) * scale_factor
+		effects_layer.add_child(mote)
+		var tween := create_tween()
+		tween.tween_property(mote, "position", mote.position + Vector2(-3 + i, -14 - i) * scale_factor, 0.42)
+		tween.parallel().tween_property(mote, "modulate:a", 0.0, 0.42)
+		tween.tween_callback(mote.queue_free)
+
 func _show_floating_number(amount: int, virtual_pos: Vector2, is_heal: bool) -> void:
 	var label := Label.new()
 	label.text = str(amount)
@@ -456,6 +533,21 @@ func _show_banner(text: String) -> void:
 	banner_label.text = text
 	banner_panel.visible = not text.is_empty()
 
+func _set_ui_phase(phase: int) -> void:
+	ui_phase = phase
+	match ui_phase:
+		UiPhase.COMMAND_SELECT:
+			menu_panel.visible = not menu_label.text.is_empty()
+			banner_panel.visible = false
+		UiPhase.ACTION_BANNER:
+			menu_panel.visible = false
+		UiPhase.EXECUTING:
+			menu_panel.visible = false
+		UiPhase.RESULT:
+			menu_panel.visible = false
+		UiPhase.FINISHED:
+			menu_panel.visible = false
+
 func _active_effect(fallback: String) -> String:
 	var actions: Dictionary = action_presentation_data.get("actions", {})
 	var action: Dictionary = actions.get(active_action_id, {})
@@ -464,7 +556,7 @@ func _active_effect(fallback: String) -> String:
 func _show_command_preview() -> void:
 	if menu_label.text.is_empty():
 		return
-	menu_panel.visible = true
+	_set_ui_phase(UiPhase.COMMAND_SELECT)
 	await _wait(float(action_presentation_data.get("commandPreviewSeconds", 0.65)))
 
 func _update_command_menu() -> void:
@@ -490,6 +582,13 @@ func _message_name(text_key: String) -> String:
 	var messages: Dictionary = action_presentation_data.get("messages", {})
 	return str(messages.get(text_key, text_key))
 
+func _status_presentation(status_id: String) -> Dictionary:
+	var statuses: Dictionary = status_presentation_data.get("statuses", {})
+	return statuses.get(status_id, {})
+
+func _status_label(status_id: String) -> String:
+	return str(_status_presentation(status_id).get("label", status_id))
+
 func _update_status_overlay() -> void:
 	for child in status_layer.get_children():
 		child.queue_free()
@@ -500,7 +599,14 @@ func _update_status_overlay() -> void:
 		if data.is_empty():
 			continue
 		var label := Label.new()
-		label.text = "%s\n%03d/%03d" % [data.get("name", actor_id), int(data.get("hp", 0)), int(data.get("maxHp", 0))]
+		var status_ids: Array = data.get("statusIds", [])
+		var status_text := ""
+		if not status_ids.is_empty():
+			var status_labels: Array[String] = []
+			for status_id in status_ids:
+				status_labels.append(_status_label(str(status_id)))
+			status_text = "\n" + " ".join(status_labels)
+		label.text = "%s\n%03d/%03d%s" % [data.get("name", actor_id), int(data.get("hp", 0)), int(data.get("maxHp", 0)), status_text]
 		label.add_theme_font_size_override("font_size", int(_setting_int("labels/status/fontSize", 10) * scale_factor))
 		label.add_theme_color_override("font_color", _setting_color("labels/status/fontColor", Color.WHITE))
 		label.add_theme_constant_override("outline_size", max(_setting_int("labels/status/outlineSize", 2), int(_setting_int("labels/status/outlineSize", 2) * scale_factor)))

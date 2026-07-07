@@ -1,0 +1,14 @@
+{
+  "statuses": {
+    "poison": {
+      "label": "どく",
+      "fontColor": [0.82, 0.46, 1.0, 1.0],
+      "outlineColor": [0.0, 0.0, 0.0, 1.0],
+      "particleColor": [0.72, 0.25, 0.95, 0.95],
+      "offset": [-10, -18],
+      "rise": [0, -16],
+      "duration": 0.62,
+      "particleCount": 5
+    }
+  }
+}
